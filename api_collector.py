@@ -16,18 +16,18 @@ RETRY_DELAY = 10  # Segundos entre reintentos
 
 def generate_urls(warehouse_code):
     """Genera URLs para el almacén específico con encoding seguro"""
-    encoded_warehouse = quote(f"ctxn_warehouse_code ilike '{warehouse_code}'")
+    encoded_warehouse = quote(f"ctxn_warehouse_code ilike '{warehouse_code}%25%'")
     
     queries = [
-        {"take": 30000, "conditions": "ctxn_movement_type ilike '313%%' and (ctxn_primary_qty > 0) and (ctxn_primary_qty <= 3)"},
-        {"take": 30000, "conditions": "ctxn_movement_type ilike '313%%' and (ctxn_primary_qty > 3) and (ctxn_primary_qty <= 50)"},
-        {"take": 30000, "conditions": "ctxn_movement_type ilike '313%%' and (ctxn_primary_qty > 50)"},
-        {"take": 20000, "conditions": "(ctxn_movement_type not ilike '313%%') and (ctxn_movement_type not ilike '311%%') and (ctxn_movement_type not ilike '261%%') and (ctxn_movement_type not ilike '344%%') and (ctxn_movement_type not ilike '327%%') and (ctxn_movement_type not ilike '349%%') and (ctxn_movement_type not ilike '325%%') and (ctxn_movement_type not ilike '702%%') and (ctxn_movement_type not ilike '322%%') and (ctxn_movement_type not ilike '102%%') and (ctxn_movement_type not ilike '309%%') and (ctxn_movement_type not ilike '350%%') and (ctxn_movement_type not ilike '343%%') and (ctxn_movement_type not ilike '321%%')"},
-        {"take": 30000, "conditions": "(ctxn_movement_type ilike '311%%') and (ctxn_primary_qty > 0) and (ctxn_handling_unit not ilike 'PLT%%')"},
-        {"take": 30000, "conditions": "(ctxn_movement_type ilike '261%%') and (ctxn_primary_qty < 0) and (ctxn_primary_qty >= -3)"},
-        {"take": 30000, "conditions": "(ctxn_movement_type ilike '261%%') and (ctxn_primary_qty < -3) and (ctxn_primary_qty >= -50)"},
-        {"take": 30000, "conditions": "(ctxn_movement_type ilike '261%%') and (ctxn_primary_qty < -50)"},
-        {"take": 5000, "conditions": "(ctxn_movement_type ilike '102%%' or ctxn_movement_type ilike '702%%')"}
+        {"take": 30000, "conditions": "ctxn_movement_type ilike '313%25%' and (ctxn_primary_qty > 0) and (ctxn_primary_qty <= 3)"},
+        {"take": 30000, "conditions": "ctxn_movement_type ilike '313%25%' and (ctxn_primary_qty > 3) and (ctxn_primary_qty <= 50)"},
+        {"take": 30000, "conditions": "ctxn_movement_type ilike '313%25%' and (ctxn_primary_qty > 50)"},
+        {"take": 20000, "conditions": "(ctxn_movement_type not ilike '313%25%') and (ctxn_movement_type not ilike '311%25%') and (ctxn_movement_type not ilike '261%25%') and (ctxn_movement_type not ilike '344%25%') and (ctxn_movement_type not ilike '327%25%') and (ctxn_movement_type not ilike '349%25%') and (ctxn_movement_type not ilike '325%25%') and (ctxn_movement_type not ilike '702%25%') and (ctxn_movement_type not ilike '322%25%') and (ctxn_movement_type not ilike '102%25%') and (ctxn_movement_type not ilike '309%25%') and (ctxn_movement_type not ilike '350%25%') and (ctxn_movement_type not ilike '343%25%') and (ctxn_movement_type not ilike '321%25%')"},
+        {"take": 30000, "conditions": "(ctxn_movement_type ilike '311%25%') and (ctxn_primary_qty > 0) and (ctxn_handling_unit not ilike 'PLT%25%')"},
+        {"take": 30000, "conditions": "(ctxn_movement_type ilike '261%25%') and (ctxn_primary_qty < 0) and (ctxn_primary_qty >= -3)"},
+        {"take": 30000, "conditions": "(ctxn_movement_type ilike '261%25%') and (ctxn_primary_qty < -3) and (ctxn_primary_qty >= -50)"},
+        {"take": 30000, "conditions": "(ctxn_movement_type ilike '261%25%') and (ctxn_primary_qty < -50)"},
+        {"take": 5000, "conditions": "(ctxn_movement_type ilike '102%25%' or ctxn_movement_type ilike '702%25%')"}
     ]
     
     base_conditions = f"(ctxn_transaction_date > current_date - 182)"
