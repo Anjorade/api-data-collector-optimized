@@ -7,7 +7,7 @@ from urllib.parse import quote
 
 # Configuración desde variables de entorno
 TOKEN = os.getenv("API_TOKEN")
-BASE_URL = os.getenv("API_BASE_URL")  # Ahora es un secreto
+BASE_URL = os.getenv("API_BASE_URL")  # Debería ser "api.ilogic.cloud:8080/ilogic-ardisa-services/webresources/api/v6/services/System.MaterialTransactions.List.View1"
 HEADERS = {"token": TOKEN}
 WAREHOUSE_CODES = os.getenv("WAREHOUSE_CODES", "1145,1290").split(",")
 MAX_RETRIES = 2  # Exactamente 2 reintentos
@@ -15,8 +15,8 @@ REQUEST_DELAY = 30  # Segundos entre consultas
 RETRY_DELAY = 10  # Segundos entre reintentos
 
 def generate_urls(warehouse_code):
-    """Genera URLs para el almacén específico con encoding seguro"""
-    encoded_warehouse = quote(f"ctxn_warehouse_code ilike '{warehouse_code}%25%'")
+    """Genera URLs para el almacén específico con el formato exacto requerido por la API"""
+    base_condition = f"ctxn_warehouse_code ilike '{warehouse_code}' and (ctxn_transaction_date > current_date -182)"
     
     queries = [
         {"take": 30000, "conditions": "ctxn_movement_type ilike '313%25%' and (ctxn_primary_qty > 0) and (ctxn_primary_qty <= 3)"},
@@ -30,14 +30,13 @@ def generate_urls(warehouse_code):
         {"take": 5000, "conditions": "(ctxn_movement_type ilike '102%25%' or ctxn_movement_type ilike '702%25%')"}
     ]
     
-    base_conditions = f"(ctxn_transaction_date > current_date - 182)"
     urls = []
     
     for query in queries:
         url = (
             f"{BASE_URL}?orderby=ctxn_transaction_date%20desc"
             f"&take={query['take']}"
-            f"&where={encoded_warehouse}%20and%20{base_conditions}%20and%20{query['conditions']}"
+            f"&where={base_condition}%20and%20{query['conditions']}"
         )
         urls.append(url)
     
@@ -71,7 +70,7 @@ def process_warehouse(warehouse_code):
     all_data = pd.DataFrame()
     
     for idx, url in enumerate(urls, 1):
-        print(f"📊 Consulta {idx}/{len(urls)}")
+        print(f"📊 Consulta {idx}/{len(urls)} - URL: {url}")  # Mostramos la URL para depuración
         df = fetch_api_data(url, warehouse_code)
         
         if not df.empty:
