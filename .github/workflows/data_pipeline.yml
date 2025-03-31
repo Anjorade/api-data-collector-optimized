@@ -32,7 +32,7 @@ jobs:
       run: python api_collector.py
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: transaction-data
         path: data/*.parquet
