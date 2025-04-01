@@ -1,87 +1,38 @@
-name: Warehouse Data Pipeline
+name: API Data Collector
 
 on:
   schedule:
-    - cron: '0 7 * * *'  # Ejecuta diariamente a las 7 AM UTC (2 AM hora de Colombia)
-  workflow_dispatch:     # Permite ejecución manual
+    - cron: '0 2 * * *'  # Ejecutar diariamente a las 2 AM UTC
+  workflow_dispatch:      # Permite ejecución manual
 
 env:
   API_TOKEN: ${{ secrets.API_TOKEN }}
-  API_BASE_URL: ${{ secrets.API_BASE_URL }}
-  WAREHOUSE_CODES: "1145,1290"  # Códigos de almacenes a procesar
+  API_BASE_URL: ${{ secrets.API_BASE_URL }}  # Nueva variable de entorno
 
 jobs:
-  collect-and-store:
+  collect-data:
     runs-on: ubuntu-latest
-    timeout-minutes: 45  # Límite de tiempo de ejecución
-
+    
     steps:
-    # Paso 1: Checkout del código
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0  # Necesario para git push
-
-    # Paso 2: Configurar Python
-    - name: Set up Python 3.10
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.10'
-
-    # Paso 3: Instalar dependencias
+    
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install pandas requests pyarrow
 
-    # Paso 4: Ejecutar el script collector
-    - name: Run Data Collector
+    - name: Run API collector
       run: python api_collector.py
 
-    # Paso 5: Verificar archivos generados
-    - name: Verify generated files
-      run: |
-        echo "=== ARCHIVOS GENERADOS ==="
-        ls -lh data/
-        echo "=== TAMAÑO TOTAL ==="
-        du -sh data/
-        echo "=== RESUMEN ==="
-        python -c "import pandas as pd; [print(f'{f.split(\"_\")[-1].split(\".\")[0]}: {len(pd.read_parquet(f\"data/{f}\"))} registros') for f in ['transactions_1145.parquet', 'transactions_1290.parquet'] if os.path.exists(f\"data/{f}\")]"
-
-    # Paso 6: Subir datos como artefacto
-    - name: Upload data as artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: warehouse-transactions
-        path: data/*.parquet
-        retention-days: 3
-
-    # Paso 7: Commit y push de los datos al repositorio
-    - name: Commit and Push Data
+    - name: Commit and push changes
       run: |
         git config --global user.name "GitHub Actions"
         git config --global user.email "actions@github.com"
-        
-        # Agregar solo archivos de datos
         git add data/transactions_*.parquet
-        
-        # Verificar si hay cambios antes de commit
-        if [ -n "$(git status --porcelain)" ]; then
-          git commit -m "Auto-update: Transaction data $(date +'%Y-%m-%d %H:%M')"
-          git push
-        else
-          echo "No hay cambios en los datos para commit"
-        fi
-
-    # Paso 8: Notificación de estado (opcional)
-    - name: Notify on success
-      if: success()
-      uses: actions/github-script@v6
-      with:
-        script: |
-          github.rest.issues.createComment({
-            issue_number: context.issue.number,
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            body: '✅ Pipeline ejecutado exitosamente! Datos actualizados.'
-          })
+        git diff --quiet && git diff --staged --quiet || git commit -m "Actualización automática de datos - $(date +'%Y-%m-%d %H:%M')"
+        git push
