@@ -38,7 +38,17 @@ jobs:
     - name: Run Data Collector
       run: python api_collector.py
 
-    # Paso 5: Subir datos como artefacto (opcional para backup)
+    # Paso 5: Verificar archivos generados
+    - name: Verify generated files
+      run: |
+        echo "=== ARCHIVOS GENERADOS ==="
+        ls -lh data/
+        echo "=== TAMAÑO TOTAL ==="
+        du -sh data/
+        echo "=== RESUMEN ==="
+        python -c "import pandas as pd; [print(f'{f.split(\"_\")[-1].split(\".\")[0]}: {len(pd.read_parquet(f\"data/{f}\"))} registros') for f in ['transactions_1145.parquet', 'transactions_1290.parquet'] if os.path.exists(f\"data/{f}\")]"
+
+    # Paso 6: Subir datos como artefacto
     - name: Upload data as artifact
       uses: actions/upload-artifact@v4
       with:
@@ -46,7 +56,7 @@ jobs:
         path: data/*.parquet
         retention-days: 3
 
-    # Paso 6: Commit y push de los datos al repositorio
+    # Paso 7: Commit y push de los datos al repositorio
     - name: Commit and Push Data
       run: |
         git config --global user.name "GitHub Actions"
@@ -63,7 +73,7 @@ jobs:
           echo "No hay cambios en los datos para commit"
         fi
 
-    # Paso 7: Notificación de estado (opcional)
+    # Paso 8: Notificación de estado (opcional)
     - name: Notify on success
       if: success()
       uses: actions/github-script@v6
